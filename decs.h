@@ -112,9 +112,9 @@
 #define PERIODIC (0)          /* whether or not to use periodic boundary conditions */
 #define OUTFLOW  (0)          /* whether or not to use outflow boundary conditions in all directions */
 #elif WHICHPROBLEM == TORUS_PROBLEM
-#define N1       (128)         /* number of physical zones in X1-direction */  //change back to 256x256
-#define N2       (128)         /* number of physical zones in X2-direction */
-#define N3       (1)          /* number of physical zones in X3-direction */
+#define N1       (64)         /* number of physical zones in X1-direction */  //change back to 256x256
+#define N2       (64)         /* number of physical zones in X2-direction */
+#define N3       (3)          /* number of physical zones in X3-direction */
 #define GR       (1)          /* whether or not to use GR */
 #define BL       (1)          /* whether or not to use BL coords */
 #define INFLOW   (0)          /* whether or not to allow inflow at boundaries */
@@ -180,7 +180,7 @@
 
 #define NDIM       (4)        /* number of total dimensions.  Never changes */
 #define NPG        (5)        /* number of positions on grid for grid functions */
-#define COMPDIM    (2)        /* number of non-trivial spatial dimensions used in computation */
+#define COMPDIM    (3)        /* number of non-trivial spatial dimensions used in computation */
 
 #define NIMG       (5)        /* Number of types of diagnostics to save into fdump */
 
