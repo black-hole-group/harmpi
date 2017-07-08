@@ -777,13 +777,16 @@ def plco(myvar,**kwargs):
     plt.clf()
     return plc(myvar,**kwargs)
 
-def plc(myvar,**kwargs): #plc
+def plc(myvar,**kwargs): 
+    """Plots contours"""
     global r,h,ph
     #xcoord = kwargs.pop('x1', None)
     #ycoord = kwargs.pop('x2', None)
     if(np.min(myvar)==np.max(myvar)):
         print("The quantity you are trying to plot is a constant = %g." % np.min(myvar))
         return
+
+    # Default values for parameters
     cb = kwargs.pop('cb', False)
     nc = kwargs.pop('nc', 15)
     k = kwargs.pop('k',0)
@@ -809,6 +812,7 @@ def plc(myvar,**kwargs): #plc
     ax = kwargs.pop("ax",None)
     cbticks = kwargs.pop("cbticks",None)
     domathify = kwargs.pop("domathify",0)
+
     if np.abs(xy)==1:
         if xcoord is None: xcoord = r * np.sin(h)
         if ycoord is None: ycoord = r * np.cos(h)
@@ -861,6 +865,7 @@ def plc(myvar,**kwargs): #plc
             res = ax.contourf(xcoord[:,:,0],ycoord[:,:,0],myvar[:,:,0],nc,**kwargs)
         else:
             res = ax.contour(xcoord[:,:,0],ycoord[:,:,0],myvar[:,:,0],nc,**kwargs)
+            #res = ax.pcolormesh(xcoord[:,:,0],ycoord[:,:,0],myvar[:,:,0],**kwargs)
     if xy>0 and not symmx:
         ax.set_xlim(0,xmax)
         ax.set_ylim(-ymax,ymax)
@@ -914,6 +919,155 @@ def plc(myvar,**kwargs): #plc
         return res, cb
     else:
         return res
+
+
+def pld(myvar,**kwargs): 
+    """Plots density field. Based on plc"""
+    global r,h,ph
+    #xcoord = kwargs.pop('x1', None)
+    #ycoord = kwargs.pop('x2', None)
+    if(np.min(myvar)==np.max(myvar)):
+        print("The quantity you are trying to plot is a constant = %g." % np.min(myvar))
+        return
+
+    # Default values for parameters
+    cb = kwargs.pop('cb', False)
+    nc = kwargs.pop('nc', 15)
+    k = kwargs.pop('k',0)
+    mirrorx = kwargs.pop('mirrorx',0)
+    mirrory = kwargs.pop('mirrory',0)
+    symmx = kwargs.pop('symmx',0)
+    #cmap = kwargs.pop('cmap',cm.jet)
+    isfilled = kwargs.pop('isfilled',False)
+    xy = kwargs.pop('xy',0)
+    xcoord = kwargs.pop("xcoord",None)
+    ycoord = kwargs.pop("ycoord",None)
+    lin = kwargs.pop('lin',0)
+    xmax = kwargs.pop('xmax',10)
+    ymax = kwargs.pop('ymax',5)
+    cbxlabel = kwargs.pop('cbxla',None)
+    cbylabel = kwargs.pop('cbyla',None)
+    fntsize = kwargs.pop("fntsize",20)
+    cbgoodticks = kwargs.pop("cbgoodticks",1)
+    xlabel = kwargs.pop("xla",None)
+    ylabel = kwargs.pop("yla",None)
+    dobh = kwargs.pop("dobh",1)
+    pretty = kwargs.pop("pretty",0)
+    ax = kwargs.pop("ax",None)
+    cbticks = kwargs.pop("cbticks",None)
+    domathify = kwargs.pop("domathify",0)
+
+    if np.abs(xy)==1:
+        if xcoord is None: xcoord = r * np.sin(h)
+        if ycoord is None: ycoord = r * np.cos(h)
+        if mirrory: ycoord *= -1
+        if mirrorx: xcoord *= -1
+    if xcoord is not None and ycoord is not None:
+        xcoord = xcoord[:,:,None] if xcoord.ndim == 2 else xcoord[:,:,k:k+1]
+        ycoord = ycoord[:,:,None] if ycoord.ndim == 2 else ycoord[:,:,k:k+1]
+    if np.abs(xy)==1 and symmx:
+        if myvar.ndim == 2:
+            myvar = myvar[:,:,None] if myvar.ndim == 2 else myvar[:,:,k:k+1]
+            myvar=np.concatenate((myvar[:,::-1],myvar),axis=1)
+            xcoord=np.concatenate((-xcoord[:,::-1],xcoord),axis=1)
+            ycoord=np.concatenate((ycoord[:,::-1],ycoord),axis=1)
+        else:
+            if myvar.shape[-1] > 1: 
+                symmk = (k+nz/2)%nz 
+            else: 
+                symmk = k
+            myvar=np.concatenate((myvar[:,ny-1:ny,k:k+1],myvar[:,::-1,symmk:symmk+1],myvar[:,:,k:k+1]),axis=1)
+            xcoord=np.concatenate((xcoord[:,ny-1:ny,k:k+1],-xcoord[:,::-1],xcoord),axis=1)
+            ycoord=np.concatenate((ycoord[:,ny-1:ny,k:k+1],ycoord[:,::-1],ycoord),axis=1)
+    elif np.abs(xy) == 2 and symmx:
+        #if fracphi == 0.5 done in a robust way
+        if get_fracphi() < 0.75:
+            r1 = np.concatenate((r,r,r[...,0:1]),axis=2)
+            ph1 = np.concatenate((ph,ph+np.pi,ph[...,0:1]+2*np.pi),axis=2)
+            myvar = np.concatenate((myvar,myvar,myvar[...,0:1]),axis=2)
+        else:
+            r1 = np.concatenate((r,r[...,0:1]),axis=2)
+            ph1 = np.concatenate((ph,ph[...,0:1]+2*np.pi),axis=2)
+            myvar = np.concatenate((myvar,myvar[...,0:1]),axis=2)
+        xcoord=(r1*cos(ph1))[:,ny/2,:,None]
+        ycoord=(r1*sin(ph1))[:,ny/2,:,None]
+        myvar = myvar[:,ny/2,:,None]
+    else:
+        myvar = myvar[:,:,None] if myvar.ndim == 2 else myvar[:,:,k:k+1]
+    if lin:
+        xcoord = r
+        ycoord = h
+    if ax is None:
+        ax = plt.gca()
+    if  xcoord is None or ycoord is None:
+        if isfilled:
+            res = ax.contourf(myvar[:,:,0].transpose(),nc,**kwargs)
+        else:
+            res = ax.contour(myvar[:,:,0].transpose(),nc,**kwargs)
+    else:
+        if isfilled:
+            res = ax.contourf(xcoord[:,:,0],ycoord[:,:,0],myvar[:,:,0],nc,**kwargs)
+        else:
+            #res = ax.contour(xcoord[:,:,0],ycoord[:,:,0],myvar[:,:,0],nc,**kwargs)
+            res = ax.pcolormesh(xcoord[:,:,0],ycoord[:,:,0],myvar[:,:,0],**kwargs)
+    if xy>0 and not symmx:
+        ax.set_xlim(0,xmax)
+        ax.set_ylim(-ymax,ymax)
+    if xy> 0 and symmx:
+        ax.set_xlim(-xmax,xmax)
+        ax.set_ylim(-ymax,ymax)
+    if xlabel is not None:
+        ax.set_xlabel(xlabel,fontsize=fntsize)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel,fontsize=fntsize)
+    if pretty:
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontsize(fntsize)
+            if domathify: mathify_axes_ticks(ax,fontsize=fntsize)
+    if cb: #use color bar
+        cb = plt.colorbar(res,ax=ax)
+        if pretty and cbgoodticks and cbticks is None:
+            vmin = cb.vmin
+            vmax = cb.vmax
+            #this returns incorrect ticks! so ignore it
+            #ticks = cb.ax.get_yticks()
+            #nticks = len(ticks)
+            #if not too many ticks, then pretty them up
+            rvmin = np.round(vmin)
+            rvmax = np.round(vmax)
+            if rvmin == vmin and rvmax == vmax and vmax-vmin <= 10:
+                ticks = np.arange(rvmin,rvmax+1)
+                cb.set_ticks(ticks)
+                mathify_axes_ticks(cb.ax,fontsize=fntsize,yticks=ticks)
+            elif rvmin == vmin and rvmax == vmax and vmax-vmin <= 20:
+                ticks = np.arange(rvmin,rvmax+1)[::2]
+                cb.set_ticks(ticks)
+                mathify_axes_ticks(cb.ax,fontsize=fntsize,yticks=ticks)
+        if cbticks is not None:
+            cb.set_ticks(cbticks)
+            mathify_axes_ticks(cb.ax,fontsize=fntsize,yticks=cbticks)
+        if cbxlabel is not None:
+            cb.ax.set_xlabel(cbxlabel,fontsize=fntsize)
+        if cbxlabel is not None:
+            cb.ax.set_xlabel(cbxlabel,fontsize=fntsize)
+        if cbylabel is not None:
+            cb.ax.set_ylabel(cbylabel,fontsize=fntsize)
+        if pretty:
+            for label in cb.ax.get_yticklabels():
+                label.set_fontsize(fntsize)
+    if xy and dobh and "rhor" in globals(): 
+        el = Ellipse((0,0), 2*rhor, 2*rhor, facecolor='k', alpha=1)
+        art=ax.add_artist(el)
+        art.set_zorder(20)
+    if cb:
+        return res, cb
+    else:
+        return res
+
+
+
+
+
 
 def faraday():
     global omegaf1, omegaf2
