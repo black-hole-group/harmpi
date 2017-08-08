@@ -1,10 +1,9 @@
 #PBS -S /bin/bash
 #PBS -l walltime=48:00:00
-#PBS -l nodes=17:ppn=24
+#PBS -l nodes=16:ppn=24
 #PBS -e grmhd.err
 #PBS -o grmhd.out
 
-# execute program
-cd /sto/home/nemmen/raishin-runs
+cd /sto/home/nemmen/harmpi
 
-mpirun -n 408 -machinefile $PBS_NODEFILE /sto/home/nemmen/raishin-runs/xgrmhd.exe
+mpirun -n 384 -machinefile $PBS_NODEFILE harm 8 8 6
