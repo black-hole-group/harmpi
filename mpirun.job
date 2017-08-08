@@ -6,4 +6,4 @@
 
 cd /sto/home/nemmen/harmpi
 
-mpirun -n 384 -machinefile $PBS_NODEFILE harm 8 8 6
+mpirun -n 384 -machinefile $PBS_NODEFILE ./harm 8 8 6
